@@ -1,11 +1,11 @@
-import styles from './globals.css';
+import styles from './page.css';
 
-export default function Home() {
+export default function Delivery() {
   return (
     <div className={styles.container}>
       <br />
       <h1 className={styles.heading}>
-        Display Foods
+        DeliveryDriver
       </h1>
     </div>
   );
