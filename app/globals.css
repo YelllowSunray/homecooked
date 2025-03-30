@@ -318,12 +318,32 @@
 
 .cities-grid {
   display: flex;
-  flex-direction: row;
   justify-content: center;
   gap: 1.5rem;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* On larger screens: horizontal scrolling */
+@media (min-width: 768px) {
+  .cities-grid {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+  }
+}
+
+/* On smaller screens like iPhones: wrap into a grid */
+@media (max-width: 767px) {
+  .cities-grid {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+  
+  .city-card {
+    width: calc(50% - 0.75rem); /* 2 per row with gap consideration */
+    min-width: unset;
+    flex: 0 0 auto;
+  }
 }
 
 .city-card {
