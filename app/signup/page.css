@@ -1,0 +1,110 @@
+/* Signup Page Styles */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.signup-container {
+  max-width: 450px;
+  width: 100%;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.signup-title {
+  font-family: 'Playfair', serif;
+  font-size: 2rem;
+  color: #5f2053;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.signup-form .form-group {
+  margin-bottom: 0;
+}
+
+.signup-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  color: #333;
+}
+
+.signup-input {
+  width: 100%;
+  padding: 12px 15px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: #f9f9f9;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.signup-input:focus {
+  border-color: #5f2053;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(95, 32, 83, 0.2);
+}
+
+.signup-button {
+  padding: 12px 20px;
+  background-color: #5f2053;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 0.5rem;
+}
+
+.signup-button:hover {
+  background-color: #4a1a3d;
+}
+
+.signup-button:disabled {
+  background-color: #9c8499;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #d32f2f;
+  font-size: 0.85rem;
+  margin-top: 5px;
+}
+
+.login-prompt {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.login-link {
+  color: #5f2053;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.login-link:hover {
+  color: #4a1a3d;
+  text-decoration: underline;
+}

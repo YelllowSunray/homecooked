@@ -10,7 +10,7 @@
 }
 
 .navbar:hover {
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Hover shadow effect */
+  box-shadow: 0 6px 12px rgba(121, 19, 104, 0.2); /* Hover shadow effect */
 }
 
 /* Logo styling */
@@ -21,11 +21,12 @@
   text-decoration: none;
   letter-spacing: 1px;
   transition: color 0.3s ease;
+  font-family: 'Boldonse', sans-serif; /* Added Boldonse font */
 }
 
 /* Active link styling for homepage */
 .navbar__logo a.active {
-  color: orange; /* Make "HomeChef" orange on the homepage */
+  color: rgb(255, 255, 255); /* Make "HomeChef" orange on the homepage */
 }
 
 /* Links list */
@@ -33,6 +34,12 @@
   display: flex;
   list-style: none;
   gap: 1.5rem; /* Space between links */
+  align-items: center; /* Center links vertically */
+}
+
+.navbar__links li {
+  display: flex; /* Ensure list items are flex containers */
+  align-items: center; /* Center content vertically */
 }
 
 .navbar__links li a {
@@ -43,11 +50,12 @@
   position: relative;
   padding: 0.5rem;
   transition: color 0.3s ease, padding 0.3s ease;
+  font-family: 'Montserrat', sans-serif; /* Added Montserrat font */
 }
 
 /* Hover effect for links */
 .navbar__links li a:hover {
-  color: #e0c3d7; /* Yellow color on hover */
+  color: #4a1a3d; /* Changed to dark purple on hover */
 }
 
 .navbar__links li a::after {
@@ -57,7 +65,7 @@
   left: 0;
   width: 100%;
   height: 2px;
-  background-color: #e0c3d7;
+  background-color: #4e193d;
   transform: scaleX(0);
   transition: transform 0.3s ease-in-out;
 }
@@ -68,10 +76,40 @@
 
 /* Active link styling */
 .navbar__links li a.active {
-  color: orange; /* Active link color */
+  color: rgb(84, 30, 75); /* Active link color */
   font-weight: bold; /* Optional: Make the active link bold */
 }
 
 .navbar__links li a.active::after {
-  background-color: orange; /* Underline the active link with orange */
+  background-color: rgb(74, 14, 80); /* Underline the active link with orange */
+}
+
+/* Cart icon styling */
+.cart-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-icon {
+  width: 24px;
+  height: 24px;
+  stroke: white;
+}
+
+.cart-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #ff5722;
+  color: white;
+  font-size: 0.7rem;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
 }

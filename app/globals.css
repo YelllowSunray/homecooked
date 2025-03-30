@@ -1,52 +1,833 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@font-face {
+  font-family: 'Boldonse';
+  src: url('/fonts/Boldonse.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/fonts/Montserrat.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@font-face {
+  font-family: 'Playfair';
+  src: url('/fonts/Playfair.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Base container styling */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Then use it in your styles */
+.heading, .menuTitle {
+  font-family: 'Playfair', serif;
+  text-align: center;
+  font-size: 3rem;
+  font-weight: bold;
+  color: #5f2053;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 800px;
+}
+
+.menuDescription {
+  text-align: center;
+  font-size: 1.2rem;
+  max-width: 800px;
+  margin: 0 auto 0.5rem;
+  line-height: 1.6;
+  font-family: 'Montserrat', sans-serif;
+}
+
+/* Address form styling */
+.address-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 600px;
+  margin: 1rem auto;
+  padding: 1.5rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  width: 100%;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.address-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 1rem;
+  color: #333;
+}
+
+.input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.address-input {
+  width: 100%;
+  padding: 12px 15px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.address-input:focus {
+  border-color: #5f2053;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(95, 32, 83, 0.2);
+}
+
+/* Make sure the Algolia autocomplete is visible */
+.algolia-places {
+  width: 100%;
+}
+
+.ap-dropdown-menu {
+  width: 100%;
+  background: #ffffff;
+  box-shadow: 0 1px 10px rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  margin-top: 5px;
+  overflow: hidden;
+}
+
+.ap-suggestion {
+  padding: 10px 15px;
+  cursor: pointer;
+}
+
+.ap-suggestion:hover {
+  background-color: #f3e5f0;
+}
+
+.ap-name {
+  font-weight: bold;
+}
+
+.ap-address {
+  font-size: 0.85rem;
+  color: #777;
+}
+
+.loading-indicator {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.error-message {
+  color: #d32f2f;
+  font-size: 0.85rem;
+  margin-top: 5px;
+}
+
+.help-text {
+  color: #666;
+  font-size: 0.8rem;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+.submit-button {
+  padding: 12px 30px;
+  background-color: #5f2053;
+  color: white;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.submit-button:hover {
+  background-color: #4a1a3d;
+}
+
+/* Food Offerings Section */
+.food-offerings {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.offerings-title {
+  font-family: 'Playfair', serif;
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #5f2053;
+}
+
+.offerings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.offerings-horizontal {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: 2rem;
+  justify-content: center;
+}
+
+/* Large screens - 3 per row */
+@media (min-width: 1025px) {
+  .offerings-horizontal .food-card {
+    width: calc((100% - 4rem) / 3);
+    flex: 0 0 calc((100% - 4rem) / 3);
+    min-width: 280px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Medium screens - 2 per row */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .offerings-horizontal .food-card {
+    width: calc((100% - 2rem) / 2);
+    flex: 0 0 calc((100% - 2rem) / 2);
+    min-width: 280px;
+  }
 }
 
-.container {
+/* Small screens - 1 per row */
+@media (max-width: 640px) {
+  .offerings-horizontal .food-card {
+    width: 100%;
+    flex: 0 0 100%;
+  }
+}
+
+.food-card {
+  background-color: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.food-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.food-image-placeholder {
+  height: 180px;
+  background: linear-gradient(135deg, #9b93f3, #cc9ae4);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.heading {
-  margin-top: 1rem;
-  font-size: 2.25rem; /* 4xl */
-  font-weight: 800; /* extrabold */
+.placeholder-text {
+  font-size: 3rem;
+  color: white;
+  font-weight: bold;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.food-details {
+  padding: 1.5rem;
+}
+
+.food-name {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 1.25rem;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.food-cook {
+  color: #666;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.food-price {
+  font-weight: bold;
+  color: #5f2053;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.order-button {
+  background-color: #5f2053;
+  color: white;
+  border: none;
+  padding: 0.75rem 1rem;
+  border-radius: 5px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.2s ease;
+}
+
+.order-button:hover {
+  background-color: #4a1a3d;
+}
+
+/* Popular Cities Section */
+.popular-cities {
+  max-width: 800px;
+  margin: 3rem auto;
   text-align: center;
 }
 
-@media (min-width: 640px) {
-  .heading {
-    font-size: 3rem; /* 5xl */
+.popular-cities-title {
+  font-family: 'Playfair', serif;
+  font-size: 1.75rem;
+  color: #5f2053;
+  margin-bottom: 1.5rem;
+}
+
+.cities-grid {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+.city-card {
+  background: linear-gradient(135deg, #9b93f3, #cc9ae4);
+  height: 120px;
+  min-width: 180px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.city-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.city-name {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* City Page Styles */
+.back-link {
+  display: inline-block;
+  margin: 1rem 0 0.5rem;
+  color: #5f2053;
+  text-decoration: none;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.back-link:hover {
+  color: #4a1a3d;
+  text-decoration: underline;
+}
+
+.offerings-subtitle {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.3rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #666;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #5f2053;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.no-offerings {
+  text-align: center;
+  padding: 3rem 1rem;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.no-offerings p {
+  margin-bottom: 1rem;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.back-home-button {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 10px 20px;
+  background-color: #5f2053;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.back-home-button:hover {
+  background-color: #4a1a3d;
+}
+
+/* Login Page Styles */
+.login-container {
+  max-width: 450px;
+  width: 100%;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.login-title {
+  font-family: 'Playfair', serif;
+  font-size: 2rem;
+  color: #5f2053;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.login-form .form-group {
+  margin-bottom: 0;
+}
+
+.login-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  color: #333;
+}
+
+.login-input {
+  width: 100%;
+  padding: 12px 15px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: #f9f9f9;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.login-input:focus {
+  border-color: #5f2053;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(95, 32, 83, 0.2);
+}
+
+.login-button {
+  padding: 12px 20px;
+  background-color: #5f2053;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 0.5rem;
+}
+
+.login-button:hover {
+  background-color: #4a1a3d;
+}
+
+.login-button:disabled {
+  background-color: #9c8499;
+  cursor: not-allowed;
+}
+
+.login-options {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.forgot-password-link {
+  color: #5f2053;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.forgot-password-link:hover {
+  color: #4a1a3d;
+  text-decoration: underline;
+}
+
+.signup-prompt {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.signup-link {
+  color: #5f2053;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.signup-link:hover {
+  color: #4a1a3d;
+  text-decoration: underline;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid #ddd;
+}
+
+.divider span {
+  padding: 0 1rem;
+  color: #777;
+  font-size: 0.9rem;
+}
+
+.google-login-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px 20px;
+  background-color: white;
+  color: #555;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.google-login-button:hover {
+  background-color: #f9f9f9;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.google-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 10px;
+}
+
+.food-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.food-card-link:hover .food-name {
+  color: #5f2053;
+}
+
+/* Cart Page Styles */
+.cart-title {
+  font-family: 'Playfair', serif;
+  color: #5f2053;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.empty-cart {
+  text-align: center;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.browse-button {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 10px 20px;
+  background-color: #5f2053;
+  color: white;
+  border-radius: 5px;
+  text-decoration: none;
+  font-family: 'Montserrat', sans-serif;
+  transition: background-color 0.3s;
+}
+
+.browse-button:hover {
+  background-color: #4a1a3d;
+}
+
+.cart-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.cart-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cart-item {
+  display: flex;
+  background-color: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.cart-item-image {
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #9b93f3, #cc9ae4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-item-image .placeholder-text {
+  font-size: 2.5rem;
+  color: white;
+  font-weight: bold;
+}
+
+.cart-item-details {
+  flex: 1;
+  padding: 1rem;
+}
+
+.cart-item-name {
+  font-family: 'Playfair', serif;
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+}
+
+.cart-item-cook {
+  color: #666;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.cart-item-price {
+  color: #5f2053;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.cart-item-controls {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  min-width: 150px;
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.quantity-btn {
+  width: 30px;
+  height: 30px;
+  background-color: #5f2053;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quantity-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.quantity {
+  margin: 0 1rem;
+  font-weight: bold;
+}
+
+.remove-btn {
+  padding: 5px 10px;
+  background-color: transparent;
+  color: #d32f2f;
+  border: 1px solid #d32f2f;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.remove-btn:hover {
+  background-color: #d32f2f;
+  color: white;
+}
+
+.cart-summary {
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.cart-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.checkout-btn {
+  width: 100%;
+  padding: 12px 20px;
+  background-color: #5f2053;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-bottom: 1rem;
+}
+
+.checkout-btn:hover {
+  background-color: #4a1a3d;
+}
+
+.clear-cart-btn {
+  width: 100%;
+  padding: 10px;
+  background-color: transparent;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.clear-cart-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.continue-shopping {
+  text-align: center;
+}
+
+.continue-link {
+  color: #5f2053;
+  text-decoration: none;
+  font-family: 'Montserrat', sans-serif;
+  transition: color 0.3s;
+}
+
+.continue-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .cart-item {
+    flex-direction: column;
+  }
+  
+  .cart-item-image {
+    width: 100%;
+    height: 150px;
+  }
+  
+  .cart-item-controls {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
   }
 }
 
-@media (min-width: 768px) {
-  .heading {
-    font-size: 3.75rem; /* 6xl */
-  }
-}
 
