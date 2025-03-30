@@ -49,7 +49,7 @@ export default function Home() {
               onChange={(e) => setCity(e.target.value)}
             />
           </div>
-          <p className="help-text">We'll show you delicious homemade food available in your area</p>
+          <p className="help-text">We will show you delicious homemade food available in your area</p>
         </div>
         <button type="submit" className="submit-button" disabled={isLoading}>
           {isLoading ? 'Searching...' : 'Find Food Near Me'}

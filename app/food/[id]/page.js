@@ -48,7 +48,7 @@ export default function FoodItemPage() {
       <div className="container">
         <div className="not-found">
           <h1>Food Item Not Found</h1>
-          <p>Sorry, we couldn't find the food item you're looking for.</p>
+          <p>Sorry, we could not find the food item you are looking for.</p>
           <Link href="/" className="back-home-button">
             Back to Home
           </Link>
@@ -80,7 +80,7 @@ export default function FoodItemPage() {
           
           <div className="food-detail-description">
             <h2>About this dish</h2>
-            <p>This delicious homemade {foodItem.name} is prepared with fresh ingredients by {foodItem.cook}, one of our community's talented home cooks.</p>
+            <p>This delicious homemade {foodItem.name} is prepared with fresh ingredients by {foodItem.cook}, one of our community talented home cooks.</p>
           </div>
           
           <div className="food-detail-ingredients">

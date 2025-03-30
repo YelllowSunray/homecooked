@@ -123,7 +123,7 @@ export default function Login() {
             Forgot Password?
           </Link>
           <div className="signup-prompt">
-            Don't have an account? <Link href="/signup" className="signup-link">Sign Up</Link>
+            Do not have an account? <Link href="/signup" className="signup-link">Sign Up</Link>
           </div>
         </div>
       </div>
