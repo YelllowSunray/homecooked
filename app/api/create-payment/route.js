@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createMollieClient } from '@mollie/api-client';
 
-// Initialize Mollie client
-const mollieClient = createMollieClient({ apiKey: process.env.MOLLIE_API_KEY });
-
 export async function POST(request) {
   try {
+    // Initialize Mollie client inside the function
+    const mollieClient = createMollieClient({ apiKey: process.env.MOLLIE_API_KEY });
+    
     const { amount, description, orderId } = await request.json();
 
     // Create payment
