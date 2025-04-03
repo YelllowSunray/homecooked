@@ -4,21 +4,33 @@ import { usePathname } from 'next/navigation'; // Use next/navigation's usePathn
 import Link from 'next/link';
 import { useSession } from 'next-auth/react'; // Import useSession to get user info
 import { useCart } from '../../context/CartContext'; // Ensure this path is correct
+import { useState } from 'react';
 import './navbar.css';
 
 const Navbar = () => {
   const pathname = usePathname(); // Get the current pathname
   const { data: session } = useSession(); // Get session data
   const { cartItems } = useCart(); // Only import cartItems, not setCartItems
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // State for menu visibility
 
   const isActive = (path) => pathname === path ? 'active' : '';
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
 
   return (
     <nav className="navbar">
       <div className="navbar__logo">
         <Link href="/" className={isActive('/')}>HomePlates</Link> {/* Apply active class here */}
       </div>
-      <ul className="navbar__links">
+      <button className="hamburger" onClick={toggleMenu}>
+        {/* Hamburger Icon */}
+        <span className="bar"></span>
+        <span className="bar"></span>
+        <span className="bar"></span>
+      </button>
+      <ul className={`navbar__links ${isMenuOpen ? 'open' : ''}`}>
         <li>
           <Link href="/homecook" className={isActive('/homecook')}>BecomeHomeCook</Link>
         </li>

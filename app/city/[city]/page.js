@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { mockFoodOfferings, defaultOfferings } from '../../data/mockData';
 import { useCart } from '../../context/CartContext';
 
-
 export default function CityPage() {
   const params = useParams();
   const [offerings, setOfferings] = useState([]);
@@ -29,7 +28,7 @@ export default function CityPage() {
     
     // Simulate loading delay
     setTimeout(() => {
-      setOfferings(cityOfferings);
+      setOfferings(cityOfferings || []); // Ensure we always set an array
       setLoading(false);
     }, 500);
   }, [params.city]);
@@ -55,7 +54,7 @@ export default function CityPage() {
         </div>
       ) : (
         <div className="food-offerings">
-          {offerings.length > 0 ? (
+          {offerings && offerings.length > 0 ? (
             <>
               <h2 className="offerings-subtitle">
                 Available for pickup today:
@@ -71,6 +70,7 @@ export default function CityPage() {
                       <div className="food-details">
                         <h3 className="food-name">{offering.name}</h3>
                         <p className="food-cook">Made by: {offering.cook}</p>
+                        <p className="food-cook">{offering.address}</p>
                         <p className="food-price">{offering.price}</p>
                       </div>
                     </Link>
@@ -81,7 +81,7 @@ export default function CityPage() {
             </>
           ) : (
             <div className="no-offerings">
-              <p>Sorry, we do not have any food offerings in {cityName} yet.</p>
+              <p>Sorry, we don't have any food offerings in {cityName} yet.</p>
               <p>Check back soon or try another city!</p>
               <Link href="/" className="back-home-button">
                 Search Another City

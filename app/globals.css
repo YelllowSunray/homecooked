@@ -851,4 +851,49 @@
   }
 }
 
+/* Payment Status Page Styles */
+.payment-status-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.payment-status-title {
+  font-family: 'Playfair', serif;
+  font-size: 2rem;
+  color: #5f2053;
+  margin-bottom: 1.5rem;
+}
+
+.payment-status-message {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.payment-status-actions {
+  margin-top: 2rem;
+}
+
+.payment-status-button {
+  display: inline-block;
+  padding: 12px 30px;
+  background-color: #5f2053;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.payment-status-button:hover {
+  background-color: #4a1a3d;
+}
+
 

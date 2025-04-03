@@ -2,9 +2,47 @@
 
 import { useCart } from '../context/CartContext';
 import Link from 'next/link';
+import { useState } from 'react';
 
 export default function Cart() {
   const { cartItems, removeFromCart, clearCart, updateQuantity, getCartTotal } = useCart();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleCheckout = async () => {
+    try {
+      setIsProcessing(true);
+      setError('');
+
+      // Create a unique order ID
+      const orderId = `ORDER-${Date.now()}`;
+
+      // Call the payment API
+      const response = await fetch('/api/create-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: parseFloat(getCartTotal()),
+          description: `Order ${orderId} - ${cartItems.length} items`,
+          orderId: orderId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create payment');
+      }
+
+      // Redirect to Mollie checkout
+      window.location.href = data.checkoutUrl;
+    } catch (err) {
+      setError('Failed to process payment. Please try again.');
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="container">
@@ -168,12 +206,26 @@ export default function Cart() {
                 <span>Total:</span>
                 <span style={{ color: '#5f2053' }}>€{getCartTotal()}</span>
               </div>
+              
+              {error && (
+                <div style={{ 
+                  color: '#d32f2f',
+                  marginBottom: '1rem',
+                  textAlign: 'center'
+                }}>
+                  {error}
+                </div>
+              )}
+              
               <button 
                 className="login-button" 
                 style={{ width: '100%', marginBottom: '1rem' }}
+                onClick={handleCheckout}
+                disabled={isProcessing}
               >
-                Proceed to Checkout
+                {isProcessing ? 'Processing...' : 'Pay with iDEAL'}
               </button>
+              
               <button 
                 className="clear-cart-btn" 
                 onClick={clearCart}
