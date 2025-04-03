@@ -81,7 +81,7 @@ export default function CityPage() {
             </>
           ) : (
             <div className="no-offerings">
-              <p>Sorry, we don't have any food offerings in {cityName} yet.</p>
+              <p>Sorry, we don not have any food offerings in {cityName} yet.</p>
               <p>Check back soon or try another city!</p>
               <Link href="/" className="back-home-button">
                 Search Another City
