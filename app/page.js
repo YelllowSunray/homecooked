@@ -2,12 +2,14 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Meals from './components/meals/meals';
 
 export default function Home() {
   const router = useRouter();
   const cityInputRef = useRef(null);
   const [city, setCity] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedCity, setSelectedCity] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -17,10 +19,17 @@ export default function Home() {
     }
     
     setIsLoading(true);
+    setSelectedCity(city.trim());
     
     // Navigate to the city page
     const citySlug = city.trim().toLowerCase();
     router.push(`/city/${citySlug}`);
+  };
+
+  const handleCityClick = (cityName) => {
+    setCity(cityName);
+    setSelectedCity(cityName);
+    router.push(`/city/${cityName.toLowerCase()}`);
   };
 
   return (
@@ -60,19 +69,25 @@ export default function Home() {
       <div className="popular-cities">
         <h2 className="popular-cities-title">Popular Cities</h2>
         <div className="cities-grid">
-          {['Hilversum', 'Rotterdam', 'Utrecht', 'Eindhoven'].map(city => (
+          {['Hilversum', 'Rotterdam', 'Utrecht', 'Eindhoven'].map(cityName => (
             <div 
-              key={city} 
+              key={cityName} 
               className="city-card" 
-              onClick={() => {
-                setCity(city);
-                router.push(`/city/${city.toLowerCase()}`);
-              }}
+              onClick={() => handleCityClick(cityName)}
             >
-              <div className="city-name">{city}</div>
+              <div className="city-name">{cityName}</div>
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Featured Meals Section */}
+      <div className="featured-meals">
+        <h2 className="heading">
+          {selectedCity ? `Featured Meals in ${selectedCity}` : 'Featured Meals'}
+        </h2>
+
+        <Meals city={selectedCity} />
       </div>
     </div>
   );

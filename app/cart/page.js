@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 export default function Cart() {
-  const { cartItems, removeFromCart, clearCart, updateQuantity, getCartTotal } = useCart();
+  const { cartItems, removeFromCart, clearCart, updateQuantity, calculateTotal } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
 
@@ -24,7 +24,7 @@ export default function Cart() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          amount: parseFloat(getCartTotal()),
+          amount: parseFloat(calculateTotal()),
           description: `Order ${orderId} - ${cartItems.length} items`,
           orderId: orderId,
         }),
@@ -103,7 +103,7 @@ export default function Cart() {
                       fontSize: '0.9rem',
                       color: '#666'
                     }}>
-                      Made by: {item.cook}
+                      Made by: {item.userName || 'Anonymous Cook'}
                     </p>
                     <p className="cart-item-price" style={{ 
                       margin: '0',
@@ -111,7 +111,7 @@ export default function Cart() {
                       fontWeight: 'bold',
                       color: '#5f2053'
                     }}>
-                      {item.price}
+                      €{typeof item.price === 'string' ? item.price : item.price.toFixed(2)}
                     </p>
                   </div>
                   
@@ -195,16 +195,16 @@ export default function Cart() {
               background: '#f9f9f9',
               marginBottom: '1.5rem'
             }}>
-              <div className="cart-total" style={{ 
-                display: 'flex', 
+              <div style={{
+                display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '1.5rem',
-                fontSize: '1.2rem',
+                padding: '1rem',
+                borderTop: '1px solid #e5e7eb',
                 fontWeight: 'bold'
               }}>
                 <span>Total:</span>
-                <span style={{ color: '#5f2053' }}>€{getCartTotal()}</span>
+                <span style={{ color: '#5f2053' }}>€{calculateTotal()}</span>
               </div>
               
               {error && (

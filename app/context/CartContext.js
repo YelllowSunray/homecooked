@@ -65,10 +65,12 @@ export const CartProvider = ({ children }) => {
     setCartItems([]);
   };
   
-  const getCartTotal = () => {
+  const calculateTotal = () => {
     return cartItems.reduce((total, item) => {
-      // Remove currency symbol and convert to number
-      const price = parseFloat(item.price.replace(/[^0-9.]/g, ''));
+      // Handle both string and number price values
+      const price = typeof item.price === 'string' 
+        ? parseFloat(item.price.replace(/[^0-9.]/g, ''))
+        : parseFloat(item.price);
       return total + price * (item.quantity || 1);
     }, 0).toFixed(2);
   };
@@ -81,7 +83,7 @@ export const CartProvider = ({ children }) => {
       removeFromCart, 
       clearCart,
       updateQuantity,
-      getCartTotal
+      calculateTotal
     }}>
       {children}
     </CartContext.Provider>

@@ -2,16 +2,25 @@
 
 import { usePathname } from 'next/navigation'; // Use next/navigation's usePathname hook
 import Link from 'next/link';
-import { useSession } from 'next-auth/react'; // Import useSession to get user info
 import { useCart } from '../../context/CartContext'; // Ensure this path is correct
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { auth } from '../../firebase/config';
+import { onAuthStateChanged } from 'firebase/auth';
 import './navbar.css';
 
 const Navbar = () => {
   const pathname = usePathname(); // Get the current pathname
-  const { data: session } = useSession(); // Get session data
   const { cartItems } = useCart(); // Only import cartItems, not setCartItems
   const [isMenuOpen, setIsMenuOpen] = useState(false); // State for menu visibility
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const isActive = (path) => pathname === path ? 'active' : '';
 
@@ -35,8 +44,10 @@ const Navbar = () => {
           <Link href="/homecook" className={isActive('/homecook')}>BecomeHomeCook</Link>
         </li>
         <li>
-          {session ? (
-            <Link href="/dashboard" className={isActive('/dashboard')}>{session.user.name}</Link> // Display username
+          {user ? (
+            <Link href="/dashboard" className={isActive('/dashboard')}>
+              {user.displayName || user.email}
+            </Link>
           ) : (
             <Link href="/login" className={isActive('/login')}>Login</Link>
           )}
