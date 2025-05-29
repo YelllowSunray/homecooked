@@ -598,7 +598,7 @@ export default function Dashboard() {
             <span className="block sm:inline">{message}</span>
           </div>
         )}
-
+        
         {/* Address Information Form */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <h2 className="text-2xl font-semibold mb-4">Your Address Information</h2>
@@ -1003,10 +1003,10 @@ export default function Dashboard() {
             <div>
               <label className="block text-sm font-medium text-gray-700">Meal Image</label>
               <div className="mt-1 flex gap-2">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
                   className="flex-1"
                 />
                 <button
@@ -1062,13 +1062,13 @@ export default function Dashboard() {
             </div>
 
             <div className="flex gap-4">
-              <button
-                type="submit"
-                disabled={loading}
+            <button
+              type="submit"
+              disabled={loading}
                 className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
-              >
+            >
                 {loading ? 'Adding...' : 'Add Meal'}
-              </button>
+            </button>
             </div>
           </form>
         </div>
