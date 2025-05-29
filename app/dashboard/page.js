@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { db, auth } from '../firebase/config';
 import { collection, query, where, getDocs, addDoc, updateDoc, doc, onSnapshot, orderBy, deleteDoc } from 'firebase/firestore';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
@@ -688,7 +689,7 @@ export default function Dashboard() {
             <div className="text-center py-4">Loading your meals...</div>
           ) : userMeals.filter(meal => !isExpired(meal.createdAt, meal.daysFresh)).length === 0 ? (
             <div className="text-center py-4 text-gray-500">
-              You don't have any active meals.
+              You don&apos;t have any active meals.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -701,10 +702,12 @@ export default function Dashboard() {
                     <div key={meal.id} className="border rounded-lg p-4">
                       {meal.imageUrl && (
                         <div className="mb-4">
-                          <img 
+                          <Image 
                             src={meal.imageUrl} 
-                            alt={meal.name} 
-                            className="w-full h-48 object-cover rounded-lg"
+                            alt={meal.name}
+                            width={300}
+                            height={200}
+                            style={{ objectFit: 'cover' }}
                           />
                         </div>
                       )}
@@ -886,7 +889,7 @@ export default function Dashboard() {
             <div className="text-center py-4">Loading your meals...</div>
           ) : userMeals.filter(meal => isExpired(meal.createdAt, meal.daysFresh)).length === 0 ? (
             <div className="text-center py-4 text-gray-500">
-              You don't have any expired meals.
+              You don&apos;t have any expired meals.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -899,10 +902,12 @@ export default function Dashboard() {
                     <div key={meal.id} className="border rounded-lg p-4 bg-gray-50">
                       {meal.imageUrl && (
                         <div className="mb-4">
-                          <img 
+                          <Image 
                             src={meal.imageUrl} 
-                            alt={meal.name} 
-                            className="w-full h-48 object-cover rounded-lg opacity-75"
+                            alt={meal.name}
+                            width={300}
+                            height={200}
+                            style={{ objectFit: 'cover' }}
                           />
                         </div>
                       )}

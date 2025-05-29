@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { auth, db, storage } from '@/app/firebase/config';
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -27,7 +28,7 @@ export default function ManageMeals() {
       return;
     }
     fetchMeals();
-  }, [user]);
+  }, [user, router, fetchMeals]);
 
   const fetchMeals = async () => {
     try {
@@ -176,7 +177,16 @@ export default function ManageMeals() {
           {meals.map((meal) => (
             <div key={meal.id} className="meal-card">
               {meal.image && (
-                <img src={meal.image} alt={meal.name} className="meal-image" />
+                <div className="meal-image-container">
+                  <Image 
+                    src={meal.image} 
+                    alt={meal.name} 
+                    className="meal-image"
+                    width={300}
+                    height={200}
+                    style={{ objectFit: 'cover' }}
+                  />
+                </div>
               )}
               <div className="meal-details">
                 <h3>{meal.name}</h3>
