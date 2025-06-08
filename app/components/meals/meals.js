@@ -66,7 +66,9 @@ const Meals = ({ city }) => {
           q = query(mealsRef);
         }
 
+        console.log('Fetching meals...');
         const querySnapshot = await getDocs(q);
+        console.log('Query snapshot size:', querySnapshot.size);
 
         const mealsData = querySnapshot.docs
           .map(doc => ({
@@ -74,7 +76,11 @@ const Meals = ({ city }) => {
             ...doc.data()
           }))
           .filter(meal => !isExpired(meal.createdAt, meal.daysFresh, meal.expiresAt)) // Filter out expired meals
-          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort in memory
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort by creation date, newest first
+
+        console.log('Meals before filtering:', querySnapshot.docs.length);
+        console.log('Meals after filtering:', mealsData.length);
+        console.log('Meals data:', mealsData);
 
         setMeals(mealsData);
       } catch (err) {
@@ -88,6 +94,11 @@ const Meals = ({ city }) => {
     fetchMeals();
   }, [city, currentTime]); // Add currentTime as dependency to refresh when time changes
 
+  // Add debug log for meals state
+  useEffect(() => {
+    console.log('Current meals state:', meals);
+  }, [meals]);
+
   if (loading) {
     return <div className="meals-loading">Loading meals...</div>;
   }
@@ -97,6 +108,7 @@ const Meals = ({ city }) => {
   }
 
   if (meals.length === 0) {
+    console.log('No meals to display');
     return (
       <div className="meals-empty">
         {city ? `No meals available in ${city} yet.` : 'No meals available yet.'}

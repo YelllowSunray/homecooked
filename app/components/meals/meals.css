@@ -18,11 +18,14 @@
 
 .meals-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1.5rem;
   margin-top: 1.5rem;
   width: 100%;
-  justify-content: center;
+  max-width: 1000px;
+  justify-items: center;
+  align-items: stretch;
+  box-sizing: border-box;
 }
 
 .meal-card {
@@ -32,8 +35,7 @@
   background: white;
   transition: transform 0.2s, box-shadow 0.2s;
   width: 100%;
-  max-width: 280px;
-  margin: 0 auto;
+  max-width: 260px;
 }
 
 .meal-card:hover {
@@ -155,23 +157,32 @@
 
 /* Responsive adjustments */
 @media (max-width: 1280px) {
+  .meals-container {
+    max-width: 900px;
+  }
   .meals-grid {
-    grid-template-columns: repeat(3, 1fr);
     max-width: 900px;
   }
 }
 
 @media (max-width: 1024px) {
+  .meals-container {
+    max-width: 600px;
+  }
   .meals-grid {
-    grid-template-columns: repeat(2, 1fr);
     max-width: 600px;
   }
 }
 
 @media (max-width: 640px) {
+  .meals-container {
+    max-width: 100%;
+    padding: 0 0.5rem;
+  }
   .meals-grid {
     grid-template-columns: 1fr;
-    max-width: 280px;
+    gap: 1rem;
+    max-width: 100%;
   }
 }
 
