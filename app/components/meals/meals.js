@@ -19,15 +19,31 @@ const Meals = ({ city }) => {
     return () => clearInterval(timer);
   }, []);
 
-  const calculateRemainingDays = (createdAt, daysFresh) => {
+  const calculateRemainingDays = (createdAt, daysFresh, expiresAt) => {
+    if (expiresAt) {
+      const expirationDate = new Date(expiresAt);
+      const today = new Date();
+      // Set both dates to start of day for accurate day calculation
+      const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const startOfExpiration = new Date(expirationDate.getFullYear(), expirationDate.getMonth(), expirationDate.getDate());
+      
+      const diffTime = startOfExpiration - startOfToday;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return Math.max(0, diffDays);
+    }
+    
     const createdDate = new Date(createdAt);
-    const daysSinceCreation = Math.floor((currentTime - createdDate) / (24 * 60 * 60 * 1000));
-    const remainingDays = daysFresh - daysSinceCreation;
-    return Math.max(0, remainingDays);
+    const today = new Date();
+    // Set both dates to start of day for accurate day calculation
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const startOfCreation = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
+    
+    const daysSinceCreation = Math.floor((startOfToday - startOfCreation) / (1000 * 60 * 60 * 24));
+    return Math.max(0, daysFresh - daysSinceCreation);
   };
 
-  const isExpired = (createdAt, daysFresh) => {
-    return calculateRemainingDays(createdAt, daysFresh) <= 0;
+  const isExpired = (createdAt, daysFresh, expiresAt) => {
+    return calculateRemainingDays(createdAt, daysFresh, expiresAt) === 0;
   };
 
   useEffect(() => {
@@ -57,7 +73,7 @@ const Meals = ({ city }) => {
             id: doc.id,
             ...doc.data()
           }))
-          .filter(meal => !isExpired(meal.createdAt, meal.daysFresh)) // Filter out expired meals
+          .filter(meal => !isExpired(meal.createdAt, meal.daysFresh, meal.expiresAt)) // Filter out expired meals
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort in memory
 
         setMeals(mealsData);
@@ -107,7 +123,7 @@ const Meals = ({ city }) => {
               <div className="meal-details">
                 <span className="meal-price">€{meal.price.toFixed(2)}</span>
                 <span className="meal-freshness">
-                  Fresh for {calculateRemainingDays(meal.createdAt, meal.daysFresh)} days
+                  Fresh for {calculateRemainingDays(meal.createdAt, meal.daysFresh, meal.expiresAt)} days
                 </span>
               </div>
               <div className="meal-cook">
@@ -117,9 +133,9 @@ const Meals = ({ city }) => {
                     {meal.address.city}, {meal.address.postcode}
                   </p>
                 )}
-                {meal.phoneNumber && (
+                {meal.address?.phoneNumber && (
                   <p className="meal-phone">
-                    Contact: {meal.phoneNumber}
+                    Contact: {meal.address.phoneNumber}
                   </p>
                 )}
               </div>

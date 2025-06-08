@@ -102,8 +102,9 @@
 }
 
 .meal-phone {
-  margin-top: 0.25rem;
-  color: #888;
+  color: #4B5563;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;

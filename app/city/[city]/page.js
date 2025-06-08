@@ -131,9 +131,9 @@ export default function CityPage() {
                         Pickup: {offering.address.postcode}
                       </p>
                     )}
-                    {offering.phoneNumber && (
+                    {offering.address?.phoneNumber && (
                       <p className="food-phone text-sm text-gray-500">
-                        Contact: {offering.phoneNumber}
+                        Contact: {offering.address.phoneNumber}
                       </p>
                     )}
                   </div>
