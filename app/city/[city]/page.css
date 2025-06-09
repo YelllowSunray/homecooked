@@ -92,39 +92,51 @@
 }
 
 .food-details {
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
 .food-name {
   font-size: 1.25rem;
-  font-weight: bold;
-  color: #1F2937;
+  font-weight: 600;
+  color: #333;
   margin-bottom: 0.5rem;
 }
 
-.food-cook {
-  font-size: 0.875rem;
-  color: #6B7280;
-  margin-bottom: 0.5rem;
+.food-description {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.food-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #eee;
 }
 
 .food-price {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: bold;
-  color: #059669;
-  margin-bottom: 0.5rem;
+  color: #2c5282;
 }
 
 .food-freshness {
-  font-size: 0.875rem;
-  color: #6B7280;
-  margin-bottom: 0.5rem;
+  color: #48bb78;
+  font-size: 0.8rem;
+}
+
+.food-cook {
+  font-size: 0.8rem;
+  color: #666;
 }
 
 .food-location {
-  font-size: 0.875rem;
-  color: #6B7280;
-  margin-bottom: 0.5rem;
+  margin-top: 0.25rem;
+  color: #888;
 }
 
 .food-phone {

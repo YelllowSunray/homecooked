@@ -18,20 +18,45 @@ export default function CityPage() {
   const { addToCart } = useCart();
   const { data: session, status } = useSession();
 
+  const calculateRemainingDays = (createdAt, daysFresh, expiresAt) => {
+    if (expiresAt) {
+      const expirationDate = new Date(expiresAt);
+      const today = new Date();
+      // Set both dates to start of day for accurate day calculation
+      const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const startOfExpiration = new Date(expirationDate.getFullYear(), expirationDate.getMonth(), expirationDate.getDate());
+      
+      const diffTime = startOfExpiration - startOfToday;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return Math.max(0, diffDays);
+    }
+    
+    const createdDate = new Date(createdAt);
+    const today = new Date();
+    // Set both dates to start of day for accurate day calculation
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const startOfCreation = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate());
+    
+    const daysSinceCreation = Math.floor((startOfToday - startOfCreation) / (1000 * 60 * 60 * 24));
+    return Math.max(0, daysFresh - daysSinceCreation);
+  };
+
+  const isExpired = (createdAt, daysFresh, expiresAt) => {
+    return calculateRemainingDays(createdAt, daysFresh, expiresAt) === 0;
+  };
+
   useEffect(() => {
     const city = params.city;
     if (!city) return;
 
-    // Format city name (capitalize first letter)
+    // Format city name (capitalize first letter) for display only
     const formattedCity = city.charAt(0).toUpperCase() + city.slice(1).toLowerCase();
     setCityName(formattedCity);
 
     try {
       // Query meals for this city using the nested address.city field
-      const q = query(
-        collection(db, 'meals'),
-        where('address.city', '==', formattedCity)
-      );
+      // Get all meals and filter by city case-insensitively
+      const q = query(collection(db, 'meals'));
       
       // Use onSnapshot for real-time updates
       const unsubscribe = onSnapshot(q, 
@@ -41,6 +66,11 @@ export default function CityPage() {
               id: doc.id,
               ...doc.data()
             }))
+            .filter(meal => 
+              // Case-insensitive city comparison
+              meal.address?.city?.toLowerCase() === city.toLowerCase() &&
+              !isExpired(meal.createdAt, meal.daysFresh, meal.expiresAt)
+            )
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort in memory
           setOfferings(mealsList);
           setLoading(false);
@@ -97,7 +127,7 @@ export default function CityPage() {
       
       {offerings.length === 0 ? (
         <div className="no-offerings">
-          <p>No food offerings available in {cityName} at the moment.</p>
+          <p>No fresh food offerings available in {cityName} at the moment.</p>
           <p>Check back later or try another city!</p>
         </div>
       ) : (
@@ -123,19 +153,26 @@ export default function CityPage() {
                   )}
                   <div className="food-details">
                     <h3 className="food-name">{offering.name}</h3>
-                    <p className="food-cook">Made by: {offering.userName}</p>
-                    <p className="food-price">€{offering.price.toFixed(2)}</p>
-                    <p className="food-freshness">Fresh for {offering.daysFresh} days</p>
-                    {offering.address && (
-                      <p className="food-location text-sm text-gray-500">
-                        Pickup: {offering.address.postcode}
-                      </p>
-                    )}
-                    {offering.address?.phoneNumber && (
-                      <p className="food-phone text-sm text-gray-500">
-                        Contact: {offering.address.phoneNumber}
-                      </p>
-                    )}
+                    <p className="food-description">{offering.description}</p>
+                    <div className="food-info">
+                      <span className="food-price">€{offering.price.toFixed(2)}</span>
+                      <span className="food-freshness">
+                        Fresh for {calculateRemainingDays(offering.createdAt, offering.daysFresh, offering.expiresAt)} days
+                      </span>
+                    </div>
+                    <div className="food-cook">
+                      <p>Cooked by: {offering.userName}</p>
+                      {offering.address && (
+                        <p className="food-location">
+                          {offering.address.city}, {offering.address.postcode}
+                        </p>
+                      )}
+                      {offering.address?.phoneNumber && (
+                        <p className="food-phone">
+                          Contact: {offering.address.phoneNumber}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </Link>
                 <button 
