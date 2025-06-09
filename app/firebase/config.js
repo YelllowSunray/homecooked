@@ -1,5 +1,5 @@
 import { initializeApp, getApp } from 'firebase/app';
-import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { getAuth, setPersistence, browserLocalPersistence, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
@@ -36,6 +36,11 @@ const db = initializeFirestore(app, {
 
 // Initialize other services
 export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
+// Add scopes for Google Sign-In
+googleProvider.addScope('email');
+googleProvider.addScope('profile');
+
 export const storage = getStorage(app);
 
 // Set up auth persistence
