@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { db } from '../../firebase/config';
 import { collection, query, getDocs, orderBy, where } from 'firebase/firestore';
 import './meals.css';
+import Image from 'next/image';
 
 const Meals = ({ city }) => {
   const [meals, setMeals] = useState([]);
@@ -46,6 +47,27 @@ const Meals = ({ city }) => {
     return calculateRemainingDays(createdAt, daysFresh, expiresAt) === 0;
   };
 
+  const getFreshnessStatus = (meal) => {
+    const now = new Date();
+    
+    // Check if meal was reactivated
+    if (meal.updatedAt) {
+      const reactivationTime = new Date(meal.updatedAt);
+      const hoursSinceReactivation = (now - reactivationTime) / (1000 * 60 * 60);
+      
+      // If reactivated within last 3 hours, it's warm
+      if (hoursSinceReactivation <= 3) {
+        return 'Fresh & Warm';
+      }
+    }
+    
+    // If not reactivated or reactivation is older than 3 hours, check creation time
+    const createdTime = new Date(meal.createdAt);
+    const hoursSinceCreation = (now - createdTime) / (1000 * 60 * 60);
+    
+    return hoursSinceCreation <= 3 ? 'Fresh & Warm' : 'Fresh & Refrigerated';
+  };
+
   useEffect(() => {
     const fetchMeals = async () => {
       try {
@@ -56,31 +78,35 @@ const Meals = ({ city }) => {
         let q;
 
         if (city) {
-          // If city is provided, filter by city
           q = query(
             mealsRef,
             where('address.city', '==', city)
           );
         } else {
-          // If no city is provided, get all meals
           q = query(mealsRef);
         }
 
         console.log('Fetching meals...');
         const querySnapshot = await getDocs(q);
-        console.log('Query snapshot size:', querySnapshot.size);
-
+        
         const mealsData = querySnapshot.docs
-          .map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }))
-          .filter(meal => !isExpired(meal.createdAt, meal.daysFresh, meal.expiresAt)) // Filter out expired meals
-          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort by creation date, newest first
-
-        console.log('Meals before filtering:', querySnapshot.docs.length);
-        console.log('Meals after filtering:', mealsData.length);
-        console.log('Meals data:', mealsData);
+          .map(doc => {
+            const data = doc.data();
+            // Debug log for each meal's profile picture data
+            console.log('Meal data:', {
+              id: doc.id,
+              userName: data.userName,
+              profilePicture: data.address?.profilePicture,
+              isProfilePublic: data.address?.isProfilePublic,
+              address: data.address
+            });
+            return {
+              id: doc.id,
+              ...data
+            };
+          })
+          .filter(meal => !isExpired(meal.createdAt, meal.daysFresh, meal.expiresAt))
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         setMeals(mealsData);
       } catch (err) {
@@ -92,7 +118,7 @@ const Meals = ({ city }) => {
     };
 
     fetchMeals();
-  }, [city, currentTime]); // Add currentTime as dependency to refresh when time changes
+  }, [city, currentTime]);
 
   // Add debug log for meals state
   useEffect(() => {
@@ -122,38 +148,78 @@ const Meals = ({ city }) => {
         {city ? `Meals in ${city}` : 'Available Meals'}
       </h2>
       <div className="meals-grid">
-        {meals.map((meal) => (
-          <div key={meal.id} className="meal-card">
-            {meal.imageUrl && (
-              <div className="meal-image">
-                <img src={meal.imageUrl} alt={meal.name} />
-              </div>
-            )}
-            <div className="meal-content">
-              <h3 className="meal-name">{meal.name}</h3>
-              <p className="meal-description">{meal.description}</p>
-              <div className="meal-details">
-                <span className="meal-price">€{meal.price.toFixed(2)}</span>
-                <span className="meal-freshness">
-                  Fresh for {calculateRemainingDays(meal.createdAt, meal.daysFresh, meal.expiresAt)} days
-                </span>
-              </div>
-              <div className="meal-cook">
-                <p>Cooked by: {meal.userName}</p>
-                {meal.address && (
-                  <p className="meal-location">
-                    {meal.address.city}, {meal.address.postcode}
-                  </p>
+        {meals.map((meal) => {
+          const freshnessStatus = getFreshnessStatus(meal);
+          const isWarm = freshnessStatus === 'Fresh & Warm';
+          
+          // Debug log for each meal being rendered
+          console.log('Rendering meal:', {
+            id: meal.id,
+            userName: meal.userName,
+            hasProfilePicture: !!meal.address?.profilePicture,
+            isProfilePublic: meal.address?.isProfilePublic,
+            address: meal.address
+          });
+          
+          return (
+            <div key={meal.id} className="meal-card">
+              <div className="relative">
+                {meal.imageUrl && (
+                  <div className="meal-image">
+                    <img src={meal.imageUrl} alt={meal.name} />
+                  </div>
                 )}
-                {meal.address?.phoneNumber && (
-                  <p className="meal-phone">
-                    Contact: {meal.address.phoneNumber}
-                  </p>
+                <div className={`freshness-status ${isWarm ? 'warm' : 'refrigerated'}`}>
+                  {freshnessStatus}
+                </div>
+                {/* Debug log for profile picture condition */}
+                {console.log('Profile picture condition:', {
+                  hasPicture: !!meal.address?.profilePicture,
+                  isPublic: meal.address?.isProfilePublic,
+                  shouldShow: !!meal.address?.profilePicture && meal.address?.isProfilePublic
+                })}
+                {meal.address?.profilePicture && meal.address?.isProfilePublic && (
+                  <div className="absolute bottom-2 right-2 w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-lg">
+                    <img 
+                      src={meal.address.profilePicture} 
+                      alt={`${meal.userName}'s profile`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => console.error('Error loading profile picture:', e)}
+                    />
+                  </div>
                 )}
+              </div>
+              <div className="meal-content">
+                <h3 className="meal-name">{meal.name}</h3>
+                <p className="meal-description">{meal.description}</p>
+                <div className="meal-details">
+                  <div className="meal-price-info">
+                    <span className="meal-price">€{meal.price.toFixed(2)}</span>
+                    {meal.quantity && (
+                      <span className="meal-quantity">{meal.quantity}</span>
+                    )}
+                  </div>
+                  <span className="meal-freshness">
+                    Fresh for {calculateRemainingDays(meal.createdAt, meal.daysFresh, meal.expiresAt)} days
+                  </span>
+                </div>
+                <div className="meal-cook">
+                  <p>Cooked by: {meal.userName}</p>
+                  {meal.address && (
+                    <p className="meal-location">
+                      {meal.address.city}, {meal.address.postcode}
+                    </p>
+                  )}
+                  {meal.address?.phoneNumber && (
+                    <p className="meal-phone">
+                      Contact: {meal.address.phoneNumber}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

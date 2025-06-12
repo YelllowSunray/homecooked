@@ -15,13 +15,16 @@ export default function Dashboard() {
     houseNumber: '',
     postcode: '',
     city: '',
-    phoneNumber: ''
+    phoneNumber: '',
+    profilePicture: '',
+    isProfilePublic: false
   });
   const [newMealData, setNewMealData] = useState({
     name: '',
     price: '',
     description: '',
     daysFresh: '',
+    quantity: '',
     image: null
   });
   const [editMealData, setEditMealData] = useState({
@@ -29,6 +32,7 @@ export default function Dashboard() {
     price: '',
     description: '',
     daysFresh: '',
+    quantity: '',
     image: null
   });
   const [loading, setLoading] = useState(true);
@@ -45,6 +49,12 @@ export default function Dashboard() {
   const canvasRef = useRef(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [cameraReady, setCameraReady] = useState(false);
+  const [showProfileCamera, setShowProfileCamera] = useState(false);
+  const [profileCameraStream, setProfileCameraStream] = useState(null);
+  const [profileCameraReady, setProfileCameraReady] = useState(false);
+  const profileVideoRef = useRef(null);
+  const profileCanvasRef = useRef(null);
+  const [cameraMode, setCameraMode] = useState('meal');
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
@@ -83,7 +93,9 @@ export default function Dashboard() {
                 houseNumber: data.houseNumber || '',
                 postcode: data.postcode || '',
                 city: data.city || '',
-                phoneNumber: data.phoneNumber || ''
+                phoneNumber: data.phoneNumber || '',
+                profilePicture: data.profilePicture || '',
+                isProfilePublic: data.isProfilePublic || false
               });
             }
             setLoading(false);
@@ -183,7 +195,6 @@ export default function Dashboard() {
 
   const startCamera = async () => {
     try {
-      // If camera is already showing, stop it first
       if (showCamera) {
         stopCamera();
         return;
@@ -192,10 +203,45 @@ export default function Dashboard() {
       setError(null);
       setShowCamera(true);
       setCameraReady(false);
+
+      // First get the stream
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      });
+
+      // Then set up the video element
+      if (videoRef.current) {
+        // Set the stream first
+        videoRef.current.srcObject = stream;
+        
+        // Wait for the video to be ready
+        return new Promise((resolve) => {
+          videoRef.current.onloadedmetadata = () => {
+            // Start playing
+            videoRef.current.play()
+              .then(() => {
+                setCameraStream(stream);
+                setCameraReady(true);
+                resolve();
+              })
+              .catch((err) => {
+                console.error('Error playing video:', err);
+                setError('Failed to start video playback');
+                stopCamera();
+                resolve();
+              });
+          };
+        });
+      }
     } catch (err) {
-      console.error('Error accessing camera:', err);
-      setError('Could not access camera. Please check your permissions.');
+      console.error('Camera activation error:', err);
+      setError('Could not activate camera. Please check your permissions.');
       setShowCamera(false);
+      setCameraReady(false);
     }
   };
 
@@ -266,34 +312,37 @@ export default function Dashboard() {
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       // Convert canvas to blob
-      canvas.toBlob((blob) => {
-        if (blob) {
-          // Create a File object from the blob with a unique name
-          const fileName = `meal-${Date.now()}.jpg`;
-          const file = new File([blob], fileName, { type: 'image/jpeg' });
+      canvas.toBlob(async (blob) => {
+        try {
+          const file = new File([blob], `${cameraMode}-picture.jpg`, { type: 'image/jpeg' });
+          const imageUrl = await uploadToCloudinary(file);
           
-          // Update the meal data with the new image file
-          if (isEditing) {
-            setEditMealData(prev => ({
+          if (cameraMode === 'profile') {
+            setAddressData(prev => ({
               ...prev,
-              image: file
+              profilePicture: imageUrl
             }));
           } else {
-            setNewMealData(prev => ({
-              ...prev,
-              image: file
-            }));
+            if (isEditing) {
+              setEditMealData(prev => ({
+                ...prev,
+                image: file
+              }));
+            } else {
+              setNewMealData(prev => ({
+                ...prev,
+                image: file
+              }));
+            }
           }
-
-          // Show success message
-          setMessage('Image captured successfully!');
           
-          // Stop the camera
           stopCamera();
-        } else {
-          setError('Failed to capture image. Please try again.');
+          setCameraMode('meal'); // Reset camera mode
+        } catch (err) {
+          console.error('Error uploading image:', err);
+          setError('Failed to upload image');
         }
-      }, 'image/jpeg', 0.95);
+      }, 'image/jpeg');
     }
   };
 
@@ -305,6 +354,101 @@ export default function Dashboard() {
       }
     };
   }, [cameraStream]);
+
+  const startProfileCamera = async () => {
+    try {
+      if (showProfileCamera) {
+        stopProfileCamera();
+        return;
+      }
+
+      setError(null);
+      setShowProfileCamera(true);
+      setProfileCameraReady(false);
+
+      // First get the stream
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'user',
+          width: { ideal: 320 },
+          height: { ideal: 320 }
+        }
+      });
+
+      // Then set up the video element
+      if (profileVideoRef.current) {
+        // Set the stream first
+        profileVideoRef.current.srcObject = stream;
+        
+        // Wait for the video to be ready
+        return new Promise((resolve) => {
+          profileVideoRef.current.onloadedmetadata = () => {
+            // Start playing
+            profileVideoRef.current.play()
+              .then(() => {
+                setProfileCameraStream(stream);
+                setProfileCameraReady(true);
+                resolve();
+              })
+              .catch((err) => {
+                console.error('Error playing video:', err);
+                setError('Failed to start video playback');
+                stopProfileCamera();
+                resolve();
+              });
+          };
+        });
+      }
+    } catch (err) {
+      console.error('Camera activation error:', err);
+      setError('Could not activate camera. Please check your permissions.');
+      setShowProfileCamera(false);
+      setProfileCameraReady(false);
+    }
+  };
+
+  const stopProfileCamera = () => {
+    if (profileCameraStream) {
+      profileCameraStream.getTracks().forEach(track => track.stop());
+      setProfileCameraStream(null);
+    }
+    if (profileVideoRef.current) {
+      profileVideoRef.current.srcObject = null;
+    }
+    setShowProfileCamera(false);
+    setProfileCameraReady(false);
+  };
+
+  const captureProfilePicture = () => {
+    if (profileVideoRef.current && profileCanvasRef.current) {
+      const video = profileVideoRef.current;
+      const canvas = profileCanvasRef.current;
+      const context = canvas.getContext('2d');
+
+      // Set canvas dimensions to match video
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      // Draw the current video frame on the canvas
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Convert canvas to blob
+      canvas.toBlob(async (blob) => {
+        try {
+          const file = new File([blob], 'profile-picture.jpg', { type: 'image/jpeg' });
+          const imageUrl = await uploadToCloudinary(file);
+          setAddressData(prev => ({
+            ...prev,
+            profilePicture: imageUrl
+          }));
+          stopProfileCamera();
+        } catch (err) {
+          console.error('Error uploading profile picture:', err);
+          setError('Failed to upload profile picture');
+        }
+      }, 'image/jpeg');
+    }
+  };
 
   const handleAddressSubmit = async (e) => {
     e.preventDefault();
@@ -318,30 +462,30 @@ export default function Dashboard() {
       setMessage('');
       setLoading(true);
 
+      const addressDataToSave = {
+        ...addressData,
+        email: user.email,
+        updatedAt: new Date().toISOString()
+      };
+
       const addressesRef = collection(db, 'addresses');
       const q = query(addressesRef, where('email', '==', user.email));
       const querySnapshot = await getDocs(q);
 
-      const addressDataToSave = {
-        email: user.email,
-        streetName: addressData.streetName,
-        houseNumber: addressData.houseNumber,
-        postcode: addressData.postcode,
-        city: addressData.city,
-        phoneNumber: addressData.phoneNumber,
-        updatedAt: new Date().toISOString()
-      };
-
-      if (!querySnapshot.empty) {
+      if (querySnapshot.empty) {
+        await addDoc(addressesRef, {
+          ...addressDataToSave,
+          createdAt: new Date().toISOString()
+        });
+      } else {
         const docRef = doc(db, 'addresses', querySnapshot.docs[0].id);
         await updateDoc(docRef, addressDataToSave);
-      } else {
-        addressDataToSave.createdAt = new Date().toISOString();
-        await addDoc(addressesRef, addressDataToSave);
       }
-      setMessage('Address information saved successfully!');
+
+      setMessage('Profile information updated successfully!');
+      setTimeout(() => setMessage(''), 3000);
     } catch (err) {
-      console.error('Error saving address:', err);
+      console.error('Error saving profile information:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -433,6 +577,7 @@ export default function Dashboard() {
         price: '',
         description: '',
         daysFresh: '',
+        quantity: '',
         image: null
       });
     } catch (err) {
@@ -451,6 +596,7 @@ export default function Dashboard() {
       price: meal.price.toString(),
       description: meal.description,
       daysFresh: remainingDays.toString(),
+      quantity: meal.quantity || '',
       image: null
     });
     setIsEditing(true);
@@ -545,6 +691,7 @@ export default function Dashboard() {
         price: '',
         description: '',
         daysFresh: '',
+        quantity: '',
         image: null
       });
     } catch (err) {
@@ -590,6 +737,7 @@ export default function Dashboard() {
         price: '',
         description: '',
         daysFresh: '',
+        quantity: '',
         image: null
       });
     } catch (err) {
@@ -608,6 +756,7 @@ export default function Dashboard() {
       price: '',
       description: '',
       daysFresh: '',
+      quantity: '',
       image: null
     });
   };
@@ -732,8 +881,134 @@ export default function Dashboard() {
           
           {/* Address Information Form */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 className="text-2xl font-semibold mb-4">Your Address Information</h2>
+            <h2 className="text-2xl font-semibold mb-4">Personal Information</h2>
             <form onSubmit={handleAddressSubmit} className="space-y-4">
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3">Profile Picture</h3>
+                <div className="flex items-center space-x-4">
+                  {addressData.profilePicture ? (
+                    <div className="relative w-24 h-24">
+                      <Image
+                        src={addressData.profilePicture}
+                        alt="Profile"
+                        fill
+                        className="rounded-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setAddressData(prev => ({ ...prev, profilePicture: '' }))}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="flex space-x-2">
+                    <button
+                      type="button"
+                      onClick={startProfileCamera}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                      {showProfileCamera ? 'Cancel' : 'Take Photo'}
+                    </button>
+                    <label className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 cursor-pointer">
+                      Upload
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          if (e.target.files[0]) {
+                            try {
+                              const imageUrl = await uploadToCloudinary(e.target.files[0]);
+                              setAddressData(prev => ({
+                                ...prev,
+                                profilePicture: imageUrl
+                              }));
+                            } catch (err) {
+                              console.error('Error uploading profile picture:', err);
+                              setError('Failed to upload profile picture');
+                            }
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {/* Add the visibility toggle */}
+                <div className="mt-4">
+                  <div className="flex items-center gap-3">
+                    <label htmlFor="profileVisibility" className="text-sm font-medium text-gray-700">
+                      Public Visible Profile Image
+                    </label>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={addressData.isProfilePublic}
+                      onClick={() => setAddressData(prev => ({ ...prev, isProfilePublic: !prev.isProfilePublic }))}
+                      className={`${
+                        addressData.isProfilePublic ? 'bg-indigo-600' : 'bg-gray-200'
+                      } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+                    >
+                      <span className="sr-only">Toggle profile visibility</span>
+                      <span
+                        className={`${
+                          addressData.isProfilePublic ? 'translate-x-6' : 'translate-x-1'
+                        } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                      />
+                    </button>
+                  </div>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {addressData.isProfilePublic 
+                      ? 'Your profile picture will be visible to other users'
+                      : 'Your profile picture will only be visible to you'}
+                  </p>
+                </div>
+
+                {/* Inline Profile Camera */}
+                {showProfileCamera && (
+                  <div className="mt-4 bg-gray-50 p-4 rounded-lg">
+                    <div className="relative w-64 h-64 mx-auto bg-black rounded-lg overflow-hidden">
+                      <video
+                        ref={profileVideoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="w-full h-full object-cover"
+                        style={{ transform: 'scaleX(-1)' }}
+                      />
+                      <canvas ref={profileCanvasRef} className="hidden" />
+                    </div>
+                    <div className="mt-4 flex justify-center space-x-4">
+                      <button
+                        type="button"
+                        onClick={captureProfilePicture}
+                        disabled={!profileCameraReady}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                      >
+                        Capture
+                      </button>
+                      <button
+                        type="button"
+                        onClick={stopProfileCamera}
+                        className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Street Name</label>
@@ -808,7 +1083,7 @@ export default function Dashboard() {
                 disabled={loading}
                 className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
               >
-                {loading ? 'Saving...' : 'Save Address Information'}
+                {loading ? 'Saving...' : 'Save Personal Information'}
               </button>
             </form>
           </div>
@@ -848,9 +1123,12 @@ export default function Dashboard() {
                           <span className="text-lg font-bold text-blue-600">
                             €{meal.price.toFixed(2)}
                           </span>
-                          <span className="text-sm text-green-600">
-                            {remainingDays} day{remainingDays !== 1 ? 's' : ''} remaining
+                          <span className="text-sm text-gray-600">
+                            {meal.quantity}
                           </span>
+                        </div>
+                        <div className="text-sm text-green-600 mb-4">
+                          {remainingDays} day{remainingDays !== 1 ? 's' : ''} remaining
                         </div>
                         <div className="text-sm text-gray-500 mb-4">
                           <p>Posted on: {new Date(meal.createdAt).toLocaleDateString()}</p>
@@ -935,6 +1213,19 @@ export default function Dashboard() {
                 </div>
 
                 <div>
+                  <label className="block text-sm font-medium text-gray-700">Quantity per Portion</label>
+                  <input
+                    type="text"
+                    name="quantity"
+                    value={editMealData.quantity}
+                    onChange={handleMealChange}
+                    required
+                    placeholder="e.g. 2 pieces, 400g, 1 serving"
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
                   <label className="block text-sm font-medium text-gray-700">Meal Image</label>
                   <div className="mt-1 flex gap-2">
                     <input
@@ -952,38 +1243,42 @@ export default function Dashboard() {
                     </button>
                   </div>
                   {showCamera && (
-                    <div className="mt-4 relative aspect-video bg-black rounded-lg overflow-hidden">
-                      <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        muted
-                        className="w-full h-full object-cover"
-                        style={{ display: cameraReady ? 'block' : 'none' }}
-                      />
-                      <canvas ref={canvasRef} className="hidden" />
-                      
-                      {!cameraReady ? (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <button
-                            type="button"
-                            onClick={activateCamera}
-                            className="px-6 py-3 bg-white text-gray-800 rounded-full shadow-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
-                          >
-                            Activate Camera
-                          </button>
+                    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+                      <div className="bg-white p-4 rounded-lg max-w-lg w-full">
+                        <h3 className="text-lg font-semibold mb-4">
+                          {cameraMode === 'profile' ? 'Take Profile Picture' : 'Take Meal Picture'}
+                        </h3>
+                        <div className="relative bg-black rounded-lg overflow-hidden">
+                          <video
+                            ref={videoRef}
+                            autoPlay
+                            playsInline
+                            muted
+                            className="w-full h-full object-cover"
+                          />
+                          <canvas ref={canvasRef} className="hidden" />
                         </div>
-                      ) : (
-                        <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+                        <div className="mt-4 flex justify-center space-x-4">
                           <button
                             type="button"
                             onClick={captureImage}
-                            className="px-6 py-3 bg-white text-gray-800 rounded-full shadow-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
+                            disabled={!cameraReady}
+                            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                           >
                             Capture
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              stopCamera();
+                              setCameraMode('meal');
+                            }}
+                            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                          >
+                            Cancel
+                          </button>
                         </div>
-                      )}
+                      </div>
                     </div>
                   )}
                   {editMealData.image && !showCamera && (
@@ -1057,9 +1352,12 @@ export default function Dashboard() {
                           <span className="text-lg font-bold text-gray-600">
                             €{meal.price.toFixed(2)}
                           </span>
-                          <span className="text-sm text-red-600">
-                            Expired {daysExpired} day{daysExpired !== 1 ? 's' : ''} ago
+                          <span className="text-sm text-gray-600">
+                            {meal.quantity}
                           </span>
+                        </div>
+                        <div className="text-sm text-red-600">
+                          Expired {daysExpired} day{daysExpired !== 1 ? 's' : ''} ago
                         </div>
                         <div className="text-sm text-gray-500 mb-4">
                           <p>Posted on: {new Date(meal.createdAt).toLocaleDateString()}</p>
@@ -1143,6 +1441,19 @@ export default function Dashboard() {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-700">Quantity per Portion</label>
+                <input
+                  type="text"
+                  name="quantity"
+                  value={newMealData.quantity}
+                  onChange={handleMealChange}
+                  required
+                  placeholder="e.g. 2 pieces, 400g, 1 serving"
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700">Meal Image</label>
                 <div className="mt-1 flex gap-2">
                   <input
@@ -1160,38 +1471,42 @@ export default function Dashboard() {
                   </button>
                 </div>
                 {showCamera && (
-                  <div className="mt-4 relative aspect-video bg-black rounded-lg overflow-hidden">
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="w-full h-full object-cover"
-                      style={{ display: cameraReady ? 'block' : 'none' }}
-                    />
-                    <canvas ref={canvasRef} className="hidden" />
-                    
-                    {!cameraReady ? (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <button
-                          type="button"
-                          onClick={activateCamera}
-                          className="px-6 py-3 bg-white text-gray-800 rounded-full shadow-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
-                        >
-                          Activate Camera
-                        </button>
+                  <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+                    <div className="bg-white p-4 rounded-lg max-w-lg w-full">
+                      <h3 className="text-lg font-semibold mb-4">
+                        {cameraMode === 'profile' ? 'Take Profile Picture' : 'Take Meal Picture'}
+                      </h3>
+                      <div className="relative bg-black rounded-lg overflow-hidden">
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          playsInline
+                          muted
+                          className="w-full h-full object-cover"
+                        />
+                        <canvas ref={canvasRef} className="hidden" />
                       </div>
-                    ) : (
-                      <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+                      <div className="mt-4 flex justify-center space-x-4">
                         <button
                           type="button"
                           onClick={captureImage}
-                          className="px-6 py-3 bg-white text-gray-800 rounded-full shadow-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
+                          disabled={!cameraReady}
+                          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                         >
                           Capture
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            stopCamera();
+                            setCameraMode('meal');
+                          }}
+                          className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                        >
+                          Cancel
+                        </button>
                       </div>
-                    )}
+                    </div>
                   </div>
                 )}
                 {newMealData.image && !showCamera && (

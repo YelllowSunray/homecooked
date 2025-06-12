@@ -8,6 +8,7 @@ import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestor
 import { useCart } from '../../context/CartContext';
 import { useSession } from 'next-auth/react';
 import './page.css';
+import Image from 'next/image';
 
 export default function CityPage() {
   const params = useParams();
@@ -45,33 +46,60 @@ export default function CityPage() {
     return calculateRemainingDays(createdAt, daysFresh, expiresAt) === 0;
   };
 
+  const getFreshnessStatus = (meal) => {
+    const now = new Date();
+    
+    // Check if meal was reactivated
+    if (meal.updatedAt) {
+      const reactivationTime = new Date(meal.updatedAt);
+      const hoursSinceReactivation = (now - reactivationTime) / (1000 * 60 * 60);
+      
+      // If reactivated within last 3 hours, it's warm
+      if (hoursSinceReactivation <= 3) {
+        return 'Fresh & Warm';
+      }
+    }
+    
+    // If not reactivated or reactivation is older than 3 hours, check creation time
+    const createdTime = new Date(meal.createdAt);
+    const hoursSinceCreation = (now - createdTime) / (1000 * 60 * 60);
+    
+    return hoursSinceCreation <= 3 ? 'Fresh & Warm' : 'Fresh & Refrigerated';
+  };
+
   useEffect(() => {
     const city = params.city;
     if (!city) return;
 
-    // Format city name (capitalize first letter) for display only
     const formattedCity = city.charAt(0).toUpperCase() + city.slice(1).toLowerCase();
     setCityName(formattedCity);
 
     try {
-      // Query meals for this city using the nested address.city field
-      // Get all meals and filter by city case-insensitively
       const q = query(collection(db, 'meals'));
       
-      // Use onSnapshot for real-time updates
       const unsubscribe = onSnapshot(q, 
         (querySnapshot) => {
           const mealsList = querySnapshot.docs
-            .map(doc => ({
-              id: doc.id,
-              ...doc.data()
-            }))
+            .map(doc => {
+              const data = doc.data();
+              // Debug log for each meal's profile picture data
+              console.log('City page meal data:', {
+                id: doc.id,
+                userName: data.userName,
+                profilePicture: data.address?.profilePicture,
+                isProfilePublic: data.address?.isProfilePublic,
+                address: data.address
+              });
+              return {
+                id: doc.id,
+                ...data
+              };
+            })
             .filter(meal => 
-              // Case-insensitive city comparison
               meal.address?.city?.toLowerCase() === city.toLowerCase() &&
               !isExpired(meal.createdAt, meal.daysFresh, meal.expiresAt)
             )
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort in memory
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
           setOfferings(mealsList);
           setLoading(false);
         },
@@ -82,7 +110,6 @@ export default function CityPage() {
         }
       );
 
-      // Cleanup subscription on unmount
       return () => unsubscribe();
     } catch (error) {
       console.error('Error setting up meals listener:', error);
@@ -137,52 +164,83 @@ export default function CityPage() {
           </h2>
           
           <div className="offerings-horizontal">
-            {offerings.map(offering => (
-              <div key={offering.id} className="food-card">
-                <Link href={`/food/${offering.id}`} className="food-card-link">
-                  {offering.imageUrl ? (
-                    <img 
-                      src={offering.imageUrl} 
-                      alt={offering.name} 
-                      className="food-image"
-                    />
-                  ) : (
-                    <div className="food-image-placeholder">
-                      <div className="placeholder-text">{offering.name[0]}</div>
-                    </div>
-                  )}
-                  <div className="food-details">
-                    <h3 className="food-name">{offering.name}</h3>
-                    <p className="food-description">{offering.description}</p>
-                    <div className="food-info">
-                      <span className="food-price">€{offering.price.toFixed(2)}</span>
-                      <span className="food-freshness">
-                        Fresh for {calculateRemainingDays(offering.createdAt, offering.daysFresh, offering.expiresAt)} days
-                      </span>
-                    </div>
-                    <div className="food-cook">
-                      <p>Cooked by: {offering.userName}</p>
-                      {offering.address && (
-                        <p className="food-location">
-                          {offering.address.city}, {offering.address.postcode}
-                        </p>
+            {offerings.map(offering => {
+              const freshnessStatus = getFreshnessStatus(offering);
+              const isWarm = freshnessStatus === 'Fresh & Warm';
+              
+              return (
+                <div key={offering.id} className="food-card">
+                  <Link href={`/food/${offering.id}`} className="food-card-link">
+                    <div className="relative">
+                      {offering.imageUrl ? (
+                        <img 
+                          src={offering.imageUrl} 
+                          alt={offering.name} 
+                          className="food-image"
+                        />
+                      ) : (
+                        <div className="food-image-placeholder">
+                          <div className="placeholder-text">{offering.name[0]}</div>
+                        </div>
                       )}
-                      {offering.address?.phoneNumber && (
-                        <p className="food-phone">
-                          Contact: {offering.address.phoneNumber}
-                        </p>
+                      <div className={`freshness-status ${isWarm ? 'warm' : 'refrigerated'}`}>
+                        {freshnessStatus}
+                      </div>
+                      {/* Debug log for profile picture condition */}
+                      {console.log('Profile picture condition:', {
+                        hasPicture: !!offering.address?.profilePicture,
+                        isPublic: offering.address?.isProfilePublic,
+                        shouldShow: !!offering.address?.profilePicture && offering.address?.isProfilePublic
+                      })}
+                      {offering.address?.profilePicture && offering.address?.isProfilePublic && (
+                        <div className="absolute bottom-2 right-2 w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-lg">
+                          <img 
+                            src={offering.address.profilePicture} 
+                            alt={`${offering.userName}'s profile`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => console.error('Error loading profile picture:', e)}
+                          />
+                        </div>
                       )}
                     </div>
-                  </div>
-                </Link>
-                <button 
-                  className="order-button" 
-                  onClick={() => handleAddToCart(offering)}
-                >
-                  Order Now
-                </button>
-              </div>
-            ))}
+                    <div className="food-details">
+                      <h3 className="food-name">{offering.name}</h3>
+                      <p className="food-description">{offering.description}</p>
+                      <div className="food-info">
+                        <div className="food-price-info">
+                          <span className="food-price">€{offering.price.toFixed(2)}</span>
+                          {offering.quantity && (
+                            <span className="food-quantity">{offering.quantity}</span>
+                          )}
+                        </div>
+                        <span className="food-freshness">
+                          Fresh for {calculateRemainingDays(offering.createdAt, offering.daysFresh, offering.expiresAt)} days
+                        </span>
+                      </div>
+                      <div className="food-cook">
+                        <p>Cooked by: {offering.userName}</p>
+                        {offering.address && (
+                          <p className="food-location">
+                            {offering.address.city}, {offering.address.postcode}
+                          </p>
+                        )}
+                        {offering.address?.phoneNumber && (
+                          <p className="food-phone">
+                            Contact: {offering.address.phoneNumber}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                  <button 
+                    className="order-button" 
+                    onClick={() => handleAddToCart(offering)}
+                  >
+                    Order Now
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

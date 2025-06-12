@@ -22,16 +22,25 @@ const Navbar = () => {
     return () => unsubscribe();
   }, []);
 
+  // Close menu when pathname changes
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
+
   const isActive = (path) => pathname === path ? 'active' : '';
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  const handleLinkClick = () => {
+    setIsMenuOpen(false);
+  };
+
   return (
     <nav className="navbar">
       <div className="navbar__logo">
-        <Link href="/" className={isActive('/')}>HomePlates</Link> {/* Apply active class here */}
+        <Link href="/" className={isActive('/')} onClick={handleLinkClick}>HomePlates</Link> {/* Apply active class here */}
       </div>
       <button className="hamburger" onClick={toggleMenu}>
         {/* Hamburger Icon */}
@@ -41,19 +50,19 @@ const Navbar = () => {
       </button>
       <ul className={`navbar__links ${isMenuOpen ? 'open' : ''}`}>
         <li>
-          <Link href="/homecook" className={isActive('/homecook')}>BecomeHomeCook</Link>
+          <Link href="/homecook" className={isActive('/homecook')} onClick={handleLinkClick}>BecomeHomeCook</Link>
         </li>
         <li>
           {user ? (
-            <Link href="/dashboard" className={isActive('/dashboard')}>
+            <Link href="/dashboard" className={isActive('/dashboard')} onClick={handleLinkClick}>
               {user.displayName || user.email}
             </Link>
           ) : (
-            <Link href="/login" className={isActive('/login')}>Login</Link>
+            <Link href="/login" className={isActive('/login')} onClick={handleLinkClick}>Login</Link>
           )}
         </li>
         <li>
-          <Link href="/cart" className={`cart-link ${isActive('/cart')}`}>
+          <Link href="/cart" className={`cart-link ${isActive('/cart')}`} onClick={handleLinkClick}>
             <svg className="cart-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="9" cy="21" r="1"></circle>
               <circle cx="20" cy="21" r="1"></circle>
