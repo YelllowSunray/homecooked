@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { db } from '../../firebase/config';
-import { collection, query, getDocs, orderBy, where } from 'firebase/firestore';
+import { collection, query, getDocs, orderBy, where, onSnapshot } from 'firebase/firestore';
 import './meals.css';
 import Image from 'next/image';
 
@@ -11,6 +11,7 @@ const Meals = ({ city }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [userAddresses, setUserAddresses] = useState({}); // Store address data for each user
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -68,6 +69,33 @@ const Meals = ({ city }) => {
     return hoursSinceCreation <= 3 ? 'Fresh & Warm' : 'Fresh & Refrigerated';
   };
 
+  // Fetch address data for all users who have meals
+  useEffect(() => {
+    const fetchUserAddresses = async (userEmails) => {
+      try {
+        const addressesRef = collection(db, 'addresses');
+        const q = query(addressesRef, where('email', 'in', userEmails));
+        const querySnapshot = await getDocs(q);
+        
+        const addresses = {};
+        querySnapshot.docs.forEach(doc => {
+          const data = doc.data();
+          addresses[data.email] = data;
+        });
+        
+        setUserAddresses(addresses);
+      } catch (err) {
+        console.error('Error fetching user addresses:', err);
+      }
+    };
+
+    // Get unique user emails from meals
+    const userEmails = [...new Set(meals.map(meal => meal.userEmail))];
+    if (userEmails.length > 0) {
+      fetchUserAddresses(userEmails);
+    }
+  }, [meals]);
+
   useEffect(() => {
     const fetchMeals = async () => {
       try {
@@ -86,39 +114,39 @@ const Meals = ({ city }) => {
           q = query(mealsRef);
         }
 
-        console.log('Fetching meals...');
-        const querySnapshot = await getDocs(q);
-        
-        const mealsData = querySnapshot.docs
-          .map(doc => {
-            const data = doc.data();
-            // Debug log for each meal's profile picture data
-            console.log('Meal data:', {
-              id: doc.id,
-              userName: data.userName,
-              profilePicture: data.address?.profilePicture,
-              isProfilePublic: data.address?.isProfilePublic,
-              address: data.address
-            });
-            return {
-              id: doc.id,
-              ...data
-            };
-          })
-          .filter(meal => !isExpired(meal.createdAt, meal.daysFresh, meal.expiresAt))
-          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        // Use onSnapshot for real-time updates
+        const unsubscribe = onSnapshot(q, 
+          (querySnapshot) => {
+            const mealsData = querySnapshot.docs
+              .map(doc => {
+                const data = doc.data();
+                return {
+                  id: doc.id,
+                  ...data
+                };
+              })
+              .filter(meal => !isExpired(meal.createdAt, meal.daysFresh, meal.expiresAt))
+              .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        setMeals(mealsData);
+            setMeals(mealsData);
+          },
+          (error) => {
+            console.error('Error in meals snapshot:', error);
+            setError(error.message);
+          }
+        );
+
+        setLoading(false);
+        return () => unsubscribe();
       } catch (err) {
         console.error('Error fetching meals:', err);
         setError(err.message);
-      } finally {
         setLoading(false);
       }
     };
 
     fetchMeals();
-  }, [city, currentTime]);
+  }, [city]);
 
   // Add debug log for meals state
   useEffect(() => {
@@ -151,6 +179,8 @@ const Meals = ({ city }) => {
         {meals.map((meal) => {
           const freshnessStatus = getFreshnessStatus(meal);
           const isWarm = freshnessStatus === 'Fresh & Warm';
+          const userAddress = userAddresses[meal.userEmail];
+          const shouldShowProfile = userAddress?.profilePicture && userAddress?.isProfilePublic;
           
           // Debug log for each meal being rendered
           console.log('Rendering meal:', {
@@ -172,16 +202,10 @@ const Meals = ({ city }) => {
                 <div className={`freshness-status ${isWarm ? 'warm' : 'refrigerated'}`}>
                   {freshnessStatus}
                 </div>
-                {/* Debug log for profile picture condition */}
-                {console.log('Profile picture condition:', {
-                  hasPicture: !!meal.address?.profilePicture,
-                  isPublic: meal.address?.isProfilePublic,
-                  shouldShow: !!meal.address?.profilePicture && meal.address?.isProfilePublic
-                })}
-                {meal.address?.profilePicture && meal.address?.isProfilePublic && (
+                {shouldShowProfile && (
                   <div className="absolute bottom-2 right-2 w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-lg">
                     <img 
-                      src={meal.address.profilePicture} 
+                      src={userAddress.profilePicture} 
                       alt={`${meal.userName}'s profile`}
                       className="w-full h-full object-cover"
                       onError={(e) => console.error('Error loading profile picture:', e)}

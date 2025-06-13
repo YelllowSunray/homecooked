@@ -18,6 +18,7 @@ export default function CityPage() {
   const [error, setError] = useState(null);
   const { addToCart } = useCart();
   const { data: session, status } = useSession();
+  const [userAddresses, setUserAddresses] = useState({});
 
   const calculateRemainingDays = (createdAt, daysFresh, expiresAt) => {
     if (expiresAt) {
@@ -66,6 +67,32 @@ export default function CityPage() {
     
     return hoursSinceCreation <= 3 ? 'Fresh & Warm' : 'Fresh & Refrigerated';
   };
+
+  useEffect(() => {
+    const fetchUserAddresses = async (userEmails) => {
+      try {
+        const addressesRef = collection(db, 'addresses');
+        const q = query(addressesRef, where('email', 'in', userEmails));
+        const querySnapshot = await getDocs(q);
+        
+        const addresses = {};
+        querySnapshot.docs.forEach(doc => {
+          const data = doc.data();
+          addresses[data.email] = data;
+        });
+        
+        setUserAddresses(addresses);
+      } catch (err) {
+        console.error('Error fetching user addresses:', err);
+      }
+    };
+
+    // Get unique user emails from offerings
+    const userEmails = [...new Set(offerings.map(offering => offering.userEmail))];
+    if (userEmails.length > 0) {
+      fetchUserAddresses(userEmails);
+    }
+  }, [offerings]);
 
   useEffect(() => {
     const city = params.city;
@@ -167,6 +194,8 @@ export default function CityPage() {
             {offerings.map(offering => {
               const freshnessStatus = getFreshnessStatus(offering);
               const isWarm = freshnessStatus === 'Fresh & Warm';
+              const userAddress = userAddresses[offering.userEmail];
+              const shouldShowProfile = userAddress?.profilePicture && userAddress?.isProfilePublic;
               
               return (
                 <div key={offering.id} className="food-card">
@@ -192,10 +221,10 @@ export default function CityPage() {
                         isPublic: offering.address?.isProfilePublic,
                         shouldShow: !!offering.address?.profilePicture && offering.address?.isProfilePublic
                       })}
-                      {offering.address?.profilePicture && offering.address?.isProfilePublic && (
+                      {shouldShowProfile && (
                         <div className="absolute bottom-2 right-2 w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-lg">
                           <img 
-                            src={offering.address.profilePicture} 
+                            src={userAddress.profilePicture} 
                             alt={`${offering.userName}'s profile`}
                             className="w-full h-full object-cover"
                             onError={(e) => console.error('Error loading profile picture:', e)}

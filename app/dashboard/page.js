@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { db, auth } from '../firebase/config';
-import { collection, query, where, getDocs, addDoc, updateDoc, doc, onSnapshot, orderBy, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, updateDoc, doc, onSnapshot, orderBy, deleteDoc, writeBatch } from 'firebase/firestore';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { CLOUDINARY_CONFIG } from '../config/cloudinary';
 
@@ -472,6 +472,14 @@ export default function Dashboard() {
       const q = query(addressesRef, where('email', '==', user.email));
       const querySnapshot = await getDocs(q);
 
+      // Get the old address data to check if isProfilePublic changed
+      let oldIsProfilePublic = false;
+      if (!querySnapshot.empty) {
+        const oldData = querySnapshot.docs[0].data();
+        oldIsProfilePublic = oldData.isProfilePublic || false;
+      }
+
+      // Save the new address data
       if (querySnapshot.empty) {
         await addDoc(addressesRef, {
           ...addressDataToSave,
@@ -480,6 +488,23 @@ export default function Dashboard() {
       } else {
         const docRef = doc(db, 'addresses', querySnapshot.docs[0].id);
         await updateDoc(docRef, addressDataToSave);
+      }
+
+      // If isProfilePublic setting changed, update all user's meals
+      if (oldIsProfilePublic !== addressData.isProfilePublic) {
+        const mealsRef = collection(db, 'meals');
+        const mealsQuery = query(mealsRef, where('userId', '==', user.uid));
+        const mealsSnapshot = await getDocs(mealsQuery);
+        
+        // Update each meal in a batch
+        const batch = writeBatch(db);
+        mealsSnapshot.docs.forEach(mealDoc => {
+          const mealRef = doc(db, 'meals', mealDoc.id);
+          batch.update(mealRef, {
+            'address.isProfilePublic': addressData.isProfilePublic
+          });
+        });
+        await batch.commit();
       }
 
       setMessage('Profile information updated successfully!');
@@ -553,7 +578,17 @@ export default function Dashboard() {
       const newDaysFresh = parseInt(newMealData.daysFresh);
       const newExpiresAt = new Date(now.getFullYear(), now.getMonth(), now.getDate() + newDaysFresh, 23, 59, 59).toISOString();
 
-      // Add meal to Firestore
+      // Get the current address data
+      const addressesRef = collection(db, 'addresses');
+      const q = query(addressesRef, where('email', '==', user.email));
+      const querySnapshot = await getDocs(q);
+      let currentAddressData = {};
+      
+      if (!querySnapshot.empty) {
+        currentAddressData = querySnapshot.docs[0].data();
+      }
+
+      // Add meal to Firestore with current address data
       const mealDoc = {
         ...mealDataWithoutImage,
         price: typeof newMealData.price === 'string' ? parseFloat(newMealData.price) : newMealData.price,
@@ -564,7 +599,10 @@ export default function Dashboard() {
         userId: user.uid,
         userEmail: user.email,
         userName: user.displayName || user.email,
-        address: addressData
+        address: {
+          ...currentAddressData,
+          email: undefined // Remove email from address data as it's already in userEmail
+        }
       };
 
       console.log('Saving meal document:', mealDoc); // Debug log
