@@ -15,9 +15,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
+  metadataBase: new URL('https://www.homeplates.nl'),
   title: "HomePlates - Fresh Homemade Food in the Netherlands",
   description: "Discover delicious homemade meals from local cooks in the Netherlands. Order fresh, home-cooked food for pickup in Hilversum, Rotterdam, Utrecht, Eindhoven, and more.",
   keywords: "homemade food Netherlands, local cooks, food delivery, home cooking, fresh meals, Dutch home cooks, community cooking, Hilversum, Rotterdam, Utrecht, Eindhoven",
+  icons: {
+    icon: '/images/logoICO.ico',
+    shortcut: '/images/logoICO.ico',
+    apple: '/images/logo.png',
+  },
   openGraph: {
     title: "HomePlates - Fresh Homemade Food in the Netherlands",
     description: "Discover delicious homemade meals from local cooks in the Netherlands. Order fresh, home-cooked food for pickup.",
@@ -25,6 +31,14 @@ export const metadata = {
     locale: "nl_NL",
     siteName: "HomePlates",
     url: "https://www.homeplates.nl",
+    images: [
+      {
+        url: '/images/logo.png',
+        width: 512,
+        height: 512,
+        alt: 'HomePlates Logo',
+      }
+    ],
   },
   robots: {
     index: true,
