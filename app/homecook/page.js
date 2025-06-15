@@ -34,7 +34,7 @@ export default function HomecookPage() {
         {/* Step 2 */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-2xl font-semibold mb-4">2. Fill in Personal Information</h2>
-          <p className="mb-4">Add your profile pic, and don't forget to click save!</p>
+          <p className="mb-4">Add your profile pic, and don&apos;t forget to click save!</p>
           <div className="relative w-full h-[400px] mb-4">
             <Image
               src="/images/screenshot4.png"
