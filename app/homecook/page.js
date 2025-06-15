@@ -9,7 +9,7 @@ export default function HomecookPage() {
     <div className="container">
       <br />
       <h1 className="heading">
-        Enjoy Cooking? Paid Handsomely?
+        Enjoy Cooking? Paid Handsomely&apos;?
       </h1>
       <p className="menuDescription">
         Join our community of home cooks and earn extra income by cooking for others.
