@@ -600,8 +600,9 @@ export default function Dashboard() {
         userEmail: user.email,
         userName: user.displayName || user.email,
         address: {
-          ...currentAddressData,
-          email: undefined // Remove email from address data as it's already in userEmail
+          ...Object.fromEntries(
+            Object.entries(currentAddressData).filter(([key]) => key !== 'email')
+          )
         }
       };
 
