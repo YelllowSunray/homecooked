@@ -610,6 +610,15 @@ export default function Dashboard() {
       const docRef = await addDoc(collection(db, 'meals'), mealDoc);
       console.log('Meal saved with ID:', docRef.id); // Debug log
 
+      // Update local state with the new meal
+      setUserMeals(prevMeals => [
+        {
+          id: docRef.id,
+          ...mealDoc
+        },
+        ...prevMeals
+      ]);
+
       setMessage('Meal added successfully!');
       setNewMealData({
         name: '',

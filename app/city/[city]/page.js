@@ -199,74 +199,78 @@ export default function CityPage() {
               
               return (
                 <div key={offering.id} className="food-card">
-                  <Link href={`/food/${offering.id}`} className="food-card-link">
-                    <div className="relative">
-                      {offering.imageUrl ? (
-                        <img 
-                          src={offering.imageUrl} 
-                          alt={offering.name} 
-                          className="food-image"
-                        />
-                      ) : (
-                        <div className="food-image-placeholder">
-                          <div className="placeholder-text">{offering.name[0]}</div>
-                        </div>
-                      )}
-                      <div className={`freshness-status ${isWarm ? 'warm' : 'refrigerated'}`}>
-                        {freshnessStatus}
-                      </div>
-                      {/* Debug log for profile picture condition */}
-                      {console.log('Profile picture condition:', {
-                        hasPicture: !!offering.address?.profilePicture,
-                        isPublic: offering.address?.isProfilePublic,
-                        shouldShow: !!offering.address?.profilePicture && offering.address?.isProfilePublic
-                      })}
-                      {shouldShowProfile && (
-                        <div className="absolute bottom-2 right-2 w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-lg">
+                  <div className="food-card-content">
+                    <Link href={`/food/${offering.id}`} className="food-card-link">
+                      <div className="relative">
+                        {offering.imageUrl ? (
                           <img 
-                            src={userAddress.profilePicture} 
-                            alt={`${offering.userName}'s profile`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => console.error('Error loading profile picture:', e)}
+                            src={offering.imageUrl} 
+                            alt={offering.name} 
+                            className="food-image"
                           />
+                        ) : (
+                          <div className="food-image-placeholder">
+                            <div className="placeholder-text">{offering.name[0]}</div>
+                          </div>
+                        )}
+                        <div className={`freshness-status ${isWarm ? 'warm' : 'refrigerated'}`}>
+                          {freshnessStatus}
                         </div>
-                      )}
-                    </div>
-                    <div className="food-details">
-                      <h3 className="food-name">{offering.name}</h3>
-                      <p className="food-description">{offering.description}</p>
-                      <div className="food-info">
-                        <div className="food-price-info">
-                          <span className="food-price">€{offering.price.toFixed(2)}</span>
-                          {offering.quantity && (
-                            <span className="food-quantity">{offering.quantity}</span>
+                        {/* Debug log for profile picture condition */}
+                        {console.log('Profile picture condition:', {
+                          hasPicture: !!offering.address?.profilePicture,
+                          isPublic: offering.address?.isProfilePublic,
+                          shouldShow: !!offering.address?.profilePicture && offering.address?.isProfilePublic
+                        })}
+                        {shouldShowProfile && (
+                          <div className="absolute bottom-2 right-2 w-16 h-16 rounded-full overflow-hidden border-2 border-white shadow-lg">
+                            <img 
+                              src={userAddress.profilePicture} 
+                              alt={`${offering.userName}'s profile`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => console.error('Error loading profile picture:', e)}
+                            />
+                          </div>
+                        )}
+                      </div>
+                      <div className="food-details">
+                        <h3 className="food-name">{offering.name}</h3>
+                        <p className="food-description">{offering.description}</p>
+                        <div className="food-info">
+                          <div className="food-price-info">
+                            <span className="food-price">€{offering.price.toFixed(2)}</span>
+                            {offering.quantity && (
+                              <span className="food-quantity">{offering.quantity}</span>
+                            )}
+                          </div>
+                          <span className="food-freshness">
+                            Fresh for {calculateRemainingDays(offering.createdAt, offering.daysFresh, offering.expiresAt)} days
+                          </span>
+                        </div>
+                        <div className="food-cook">
+                          <p>Cooked by: {offering.userName}</p>
+                          {offering.address && (
+                            <p className="food-location">
+                              {offering.address.city}, {offering.address.postcode}
+                            </p>
                           )}
                         </div>
-                        <span className="food-freshness">
-                          Fresh for {calculateRemainingDays(offering.createdAt, offering.daysFresh, offering.expiresAt)} days
-                        </span>
                       </div>
-                      <div className="food-cook">
-                        <p>Cooked by: {offering.userName}</p>
-                        {offering.address && (
-                          <p className="food-location">
-                            {offering.address.city}, {offering.address.postcode}
-                          </p>
-                        )}
-                        {offering.address?.phoneNumber && (
-                          <p className="food-phone">
-                            Contact: {offering.address.phoneNumber}
-                          </p>
-                        )}
+                    </Link>
+                    {offering.address?.phoneNumber && (
+                      <div className="food-phone-container">
+                        <p className="food-phone">
+                          Contact: {offering.address.phoneNumber}
+                        </p>
                       </div>
-                    </div>
-                  </Link>
-                  <button 
-                    className="order-button" 
-                    onClick={() => handleAddToCart(offering)}
-                  >
-                    Order Now
-                  </button>
+                    )}
+                    <button 
+                      className="order-button" 
+                      onClick={() => handleAddToCart(offering)}
+                    >
+                      Order Now
+                    </button>
+                  </div>
                 </div>
               );
             })}
